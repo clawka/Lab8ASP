@@ -237,9 +237,9 @@ public partial class MoviesContext : DbContext
 
         modelBuilder.Entity<MovieCompany>(entity =>
         {
-            entity
-                .HasNoKey()
-                .ToTable("movie_company");
+            entity.ToTable("movie_company");
+            
+            entity.HasKey(mc => new { mc.MovieId, mc.CompanyId });
 
             entity.Property(e => e.CompanyId)
                 .HasDefaultValueSql("NULL")
@@ -250,8 +250,30 @@ public partial class MoviesContext : DbContext
                 .HasColumnType("INT")
                 .HasColumnName("movie_id");
 
+            entity.HasOne(d => d.Movie)
+                .WithMany()
+                .HasForeignKey(d => d.MovieId);
+            
+            entity.HasOne(d => d.Company)
+                .WithMany()
+                .HasForeignKey(d => d.CompanyId);
+        });
+        
+        
+        modelBuilder.Entity<MovieCompany>(entity =>
+        {
+            entity
+                .HasKey(e => new { e.MovieId, e.CompanyId });
+            entity.Property(e => e.CompanyId)
+                .HasDefaultValueSql("NULL")
+                .HasColumnType("INT")
+                .HasColumnName("company_id");
+            entity.Property(e => e.MovieId)
+                .HasDefaultValueSql("NULL")
+                .HasColumnType("INT")
+                .HasColumnName("movie_id");
+            entity.ToTable("movie_company");
             entity.HasOne(d => d.Company).WithMany().HasForeignKey(d => d.CompanyId);
-
             entity.HasOne(d => d.Movie).WithMany().HasForeignKey(d => d.MovieId);
         });
 

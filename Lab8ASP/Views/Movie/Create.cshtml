@@ -1,0 +1,87 @@
+@model MovieModel
+
+@*
+    For more information on enabling MVC for empty projects, visit
+    https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+
+@{
+    ViewData["Title"] = "Dodaj nowy film";
+}
+
+<h1>Dodaj nowy film</h1>
+
+<form asp-controller="Movie" asp-action="Create" method="post">
+    <div class="form-group">
+        <label asp-for="Title"></label>
+        <span asp-validation-for="Title" class="text-danger"></span>
+        <input class="form-control" asp-for="Title" />
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Overview"></label>
+        <span asp-validation-for="Overview" class="text-danger"></span>
+        <textarea class="form-control" asp-for="Overview"></textarea>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="ReleaseDate"></label>
+        <span asp-validation-for="ReleaseDate" class="text-danger"></span>
+        <!-- Dla dat używamy type="date", żeby w przeglądarce pojawił się datepicker -->
+        <input class="form-control" asp-for="ReleaseDate" type="date" />
+    </div>
+
+    <div class="form-group">
+        <label for="filter">Filtr producentów</label>
+        <input class="form-control mb-3" type="text" id="filter" placeholder="Wpisz nazwę producenta..." />
+
+        <label asp-for="CompanyId"></label>
+        <!-- select ASP.NET musi mieć to samo ID co w modelu (CompanyId) -->
+        <select class="form-control mb-3" asp-for="CompanyId" id="CompanyId">
+            <!-- Dynamicznie wypełniany przez JavaScript -->
+        </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Zapisz</button>
+</form>
+
+@section Scripts {
+    <script>
+        // Pobieramy elementy z DOM:
+        let select = document.getElementById("CompanyId");
+        let filter = document.getElementById("filter");
+
+        // Funkcja wywołuje się przy zmianie wartości w polu tekstowym "filter"
+        filter.onchange = function (e) {
+            if (filter.value.length === 0) {
+                // Jeżeli nic nie wpisano, to przerywamy
+                return;
+            }
+
+            // Wysyłamy żądanie do kontrolera WebAPI (zmień ścieżkę /api/contacts, 
+            // jeśli w projekcie używasz innego endpointu)
+            fetch(`/api/companies?filter=${filter.value}`)
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    }
+                    throw "Błąd: otrzymano status " + response.status;
+                })
+                .then(json => {
+                    // Czyścimy poprzednie opcje:
+                    select.innerHTML = '';
+
+                    // Dla każdego otrzymanego elementu tworzymy <option>
+                    for (let item of json) {
+                        let option = document.createElement('option');
+                        option.value = item.companyId;
+                        option.textContent = item.companyName;
+                        select.appendChild(option);
+                    }
+                })
+                .catch(err => {
+                    console.error("Nie udało się pobrać danych z API:", err);
+                });
+        };
+    </script>
+}
