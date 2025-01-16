@@ -61,35 +61,37 @@ namespace Lab8ASP.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(
-            [Bind("Title, Overview, ReleaseDate, ProductionCompanyId")]
+            [Bind("Title, Overview, ReleaseDate, CompanyId")]
             MovieModel model)
         {
             if (ModelState.IsValid)
             {
-// 1) Сгенерировали новый ID (чтобы не пересекся с существующими)
                 int newId = _context.Movies.Any()
                     ? _context.Movies.Max(m => m.MovieId) + 1
                     : 1;
-
-// 2) Создали фильм
-                var movie = new Movie
+                
+                var newMovie = new Movie
                 {
-                    MovieId     = newId,
-                    Title       = model.Title,
-                    Overview    = model.Overview,
+                    MovieId = newId,
+                    Title = model.Title,
+                    Overview = model.Overview,
                     ReleaseDate = model.ReleaseDate
                 };
-                _context.Movies.Add(movie);
+                _context.Movies.Add(newMovie);
                 await _context.SaveChangesAsync(); 
-// Теперь в таблице movie есть запись с movie_id = newId.
-
-// 3) Создали запись в MovieCompany
-                var mc = new MovieCompany
+                
+                if (!_context.ProductionCompanies.Any(c => c.CompanyId == model.CompanyId))
                 {
-                    MovieId   = newId,             // ссылка на уже созданного Movie
-                    CompanyId = model.CompanyId    // должна быть в таблице ProductionCompany
+                    throw new Exception($"Production Company with ID {model.CompanyId} does not exist.");
+                }
+                
+                var newMovieCompany = new MovieCompany
+                {
+                    MovieId = newMovie.MovieId,   
+                    CompanyId = model.CompanyId  
                 };
-                _context.MovieCompanies.Add(mc);
+                
+                _context.MovieCompanies.Add(newMovieCompany);
                 await _context.SaveChangesAsync();
 
                 return RedirectToAction(nameof(Index));
